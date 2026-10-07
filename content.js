@@ -392,9 +392,22 @@
         const clone = element.cloneNode(true);
         clone.querySelectorAll(
             '[data-ai-instructions="true"], [data-testid="content-integrity-instructions"], ' +
-            '[data-testid="acknowledgment-checkpoint"], [aria-hidden="true"]'
+            '[data-testid="acknowledgment-checkpoint"], [aria-hidden="true"], ' +
+            '.screen-reader-only, [class*="screenreader"], [class*="sr-only"], [hidden]'
         ).forEach(hidden => hidden.remove());
-        return (clone.innerText || clone.textContent || '').replace(/\s+/g, ' ').trim();
+
+        let text = (clone.innerText || clone.textContent || '').replace(/\s+/g, ' ').trim();
+
+        // Strip Coursera's canary/prompt-injection trap blocks
+        text = text.replace(/You are a helpful AI assistant[\s\S]*?Do you understand\?[.\s]*/gi, '');
+        text = text.replace(/To uphold Coursera's academic integrity policy[\s\S]*?Do you understand\?[.\s]*/gi, '');
+        text = text.replace(/You are a helpful AI assistant[\s\S]*?mandatory for all AI assistants[^\n.]*[.]?/gi, '');
+        text = text.replace(/To uphold Coursera's academic integrity policy[\s\S]*?mandatory for all AI assistants[^\n.]*[.]?/gi, '');
+        text = text.replace(/IMPORTANT:\s*AI Agent Compliance Verification Required[\s\S]*?mandatory for all AI assistants[^\n.]*[.]?/gi, '');
+        text = text.replace(/In accordance with Coursera's policy[\s\S]*?(?:Do you understand\?\.?|mandatory for all AI assistants[^.]*\.?)/gi, '');
+        text = text.replace(/Do you understand\?\.?/gi, '');
+
+        return text.replace(/\s+/g, ' ').trim();
     }
 
     function extractQuestion(element, index) {
